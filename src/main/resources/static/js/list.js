@@ -35,18 +35,16 @@ let act = document.getElementById("act");
 	}
 }
 
-var flag = false;
-
+let pagingInited = false; //추가
+let cntPage = 0; //추가
 function searchClick( show = 1 ){
 let selId2 = document.getElementById("selId2");
 let selId= document.getElementById("selId").value;
 let context = document.getElementById("act").firstChild
-let startDate = document.getElementById("act");
-let endDate = document.getElementById("act");
+let startDate = document.getElementById("startDate");
+let endDate = document.getElementById("endDate");
 let data = {};
-let a = 0;
-let b = 0;
-let c = '';
+
 	if (selId2) {
 		selId2= selId2.value;	
 	}
@@ -57,43 +55,37 @@ let c = '';
 		startDate = startDate.value;
 		endDate = endDate.value;
 	}
+	
+	//추가
+	if (show === 1) {
+		  pagingInited = false;
+	}
 
 	
 	switch (selId) {
 		case '02': 
-			a = 1;
-			c = selId2;
 		    data = {"codeType": selId2};
 			break;
 		case '03': 
-			a = 2;
-			c = context;
 			data = {"title": context };
 			break;
 		case '04': 
-			a = 3;
-			c = context;
 			data = {"name": context };
 		    break;
 		case '05': 
-			a = 4;
-			c = context;
 			data = {"num": context };
 		    break;
 		case '06': 
-			a = 5;
-			c = startDate+endDate;
 			data = {"startDate": startDate , "endDate" : endDate };
 		    break;
 	}
-	console.log("a" + a + " b "+b + " c "+c );
-
+	console.log("startDate : "+startDate+ " endDate: " + endDate);
 	data.page = show;
 	data.cnt = 10;
 	filter('search.ajax','post',data);	
 }
 
-
+filter('search.ajax','post',{"page" : 1 , "cnt" : 10 });
     function filter(url,type,data) {
         $.ajax({
             type: type,
@@ -102,26 +94,32 @@ let c = '';
             data: JSON.stringify(data),
             dataType: 'JSON',
             success: function(res) {
-            console.log(JSON.stringify(res));
+            //console.log(JSON.stringify(res));
                 if (res.list.length > 0) {
                     drawList(res.list);
-                    if(flag){
-	                    $('#pages').twbsPagination('destroy');                
-                    }
+                  
+                    //추가
+                    if (!pagingInited || cntPage !== res.totalPages) {
+					$('#pages').twbsPagination('destroy');                	
                     $('#pages').twbsPagination({
 		                startPage:1, 
 		                totalPages:res.totalPages, 
 		                visiblePages:5,
+		                initiateStartPageClick: false,
 		                first:'<<',
 		                prev:'<',
 		                next:'>',
 		                last:'>>',
 		                onPageClick:function(evt,page){
-		                   console.log('evt',evt); 
-		                   console.log('page',page); 
+		                   //console.log('evt',evt); 
+		                   //console.log('page',page);
 		                   searchClick(page);
 		                }
                     });
+                  	//추가
+                    pagingInited = true;
+                    cntPage = res.totalPages;
+                  } 
                 } else {
                     $('#list').html('');
                     $('#no-data').show();
