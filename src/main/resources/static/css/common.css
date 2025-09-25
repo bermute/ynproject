@@ -1,0 +1,19 @@
+@charset "UTF-8";
+table,th,td{
+	border: 1px solid black;
+	border-collapse: collapse;
+	padding:  5px 10px;
+}
+
+input[type="text"] {
+	width:100%;
+}
+
+textarea{
+	width:550px;
+	height:200px;
+	resize: none;
+}
+img#imgview{
+	width:500px;
+}

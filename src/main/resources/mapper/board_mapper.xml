@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC   "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd"
+>
+
+<mapper namespace="kr.co.gudi.mapper.BoardMapper">
+
+	<select id="searchAjax" parameterType="map" resultType="kr.co.gudi.dto.BoardDTO">
+	  SELECT *
+	  FROM (
+	    SELECT ROWNUM AS rnum, A.*
+	    FROM (
+	      SELECT
+	        CASE CODE_TYPE
+	          WHEN '01' THEN '자유'
+	          WHEN '02' THEN '익명'
+	          WHEN '03' THEN 'QnA'
+	          ELSE '기타'
+	        END AS codeType,
+	        NUM,
+	        NAME,
+	        TITLE,
+	        TO_CHAR(REGDATE, 'YYYY/MM/DD') AS regdate,
+	        BHIT
+	      FROM FREEBOARD
+	      <where>
+	        <if test="codeType != null and codeType != ''">
+	          CODE_TYPE = #{codeType}
+	        </if>
+	        <if test="title != null and title != ''">
+	          TITLE LIKE '%' ||#{title}|| '%' 
+	        </if>
+	        <if test="name != null and name != ''">
+	          NAME LIKE '%'||#{name}||'%' 
+	        </if>
+	        <if test="num != null">
+	          NUM = #{num}
+	        </if>
+	        <if test="startDate != null and endDate != null">
+	          TO_CHAR(REGDATE , 'YYYYMMDD') BETWEEN #{startDate} AND #{endDate}
+	        </if>
+	      </where>
+	      ORDER BY NUM ASC
+	    ) A
+	    WHERE ROWNUM &lt;= #{endPage}
+	  )
+	  WHERE rnum &gt;= #{startPage}
+	</select>
+	
+	<select id="totalPageCall" parameterType="map" resultType="int">
+	      SELECT
+			COUNT(*)
+	      FROM FREEBOARD
+	      <where>
+	        <if test="codeType != null and codeType != ''">
+	          CODE_TYPE = #{codeType}
+	        </if>
+	        <if test="title != null and title != ''">
+	          TITLE LIKE '%' ||#{title}|| '%' 
+	        </if>
+	        <if test="name != null and name != ''">
+	          NAME LIKE '%'||#{name}||'%' 
+	        </if>
+	        <if test="num != null">
+	          NUM = #{num}
+	        </if>
+	        <if test="startDate != null and endDate != null">
+	          TO_CHAR(REGDATE , 'YYYYMMDD') BETWEEN #{startDate} AND #{endDate}
+	        </if>
+	      </where>
+	      ORDER BY NUM ASC
+	</select>
+	
+	
+	<insert id="writeDo" parameterType="map" useGeneratedKeys="true" keyProperty="idx">
+		insert into FREEBOARD (CODE_TYPE, NUM , NAME , TITLE , CONTENT)	
+			values ( #{codetype} , FREEBOARD_SEQ.NEXTVAL ,#{num}, #{name} , #{title},#{content})
+	</insert>
+	
+	<select id="detailDo" parameterType="map">
+		select * from FREEBOARD WHERE NUM = #{idx} 
+	</select>
+	
+	<update id="bhit" parameterType="int">
+	    UPDATE FREEBOARD SET bHit = bHit + 1 WHERE FREEBOARD = #{param1}
+	</update>
+
+	<delete id="boardDel" parameterType="int">
+	    DELETE FROM FREEBOARD WHERE NUM = #{idx}
+	</delete>
+	
+	<update id="updateDo" parameterType="map">
+		update FREEBOARD set subject = #{subject} , content = #{content} where NUM = #{idx}
+	</update>
+	
+</mapper>
