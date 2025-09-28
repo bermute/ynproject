@@ -69,12 +69,18 @@
         margin: 20px 0;
         font-size: 1.2rem;
     }
-    #selId ,#selId2{
+    #selId ,#codeType{
     	width: 100px;
     }
     #act{ 
     	display: inline-block;
     }
+    button:disabled {
+	    background-color: #ccc;     /* 회색 배경 */
+	    color: #666;               /* 글자색 어둡게 */
+	    cursor: not-allowed;       /* 마우스 커서 변경 */
+	    opacity: 0.7;              /* 흐리게 */
+	}
     
 </style>
 </head>
@@ -104,160 +110,199 @@
             </tr>
         </thead>
         <tbody id="list">
-            <!-- 데이터가 없을 경우 아래 메시지 표시 -->
-        </tbody>
+			  <c:if test="${empty list}">
+			    <tr>
+			      <td colspan="6" class="text-center">작성된 데이터가 없습니다.</td>
+			    </tr>
+			  </c:if>
+			  <c:forEach var="row" items="${list}">
+			    <tr>
+			      <td>${row.codeType}</td>
+			      <td>${row.num}</td>
+			      <td>
+			        <a href="detail.go?num=${row.num}">${row.title}</a>
+			      </td>
+			      <td>${row.name}</td>
+			      <td>${row.bHit}</td>
+			      <td>${row.regdate}</td>
+			    </tr>
+			  </c:forEach>
+	    </tbody>
     </table>
     <div id="pages">
-    	
+		<div class="btn-group" role="group">
+	    	<a class="btn btn-outline-secondary ${page == 1 ? 'disabled' : ''}"
+	    			href="list.go?page=${first}&cnt=${cnt}"> &lt;&lt; </a>
+	    	<a class="btn btn-outline-secondary ${page == 1 ? 'disabled' : ''}"
+	    			href="list.go?page=${prev}&cnt=${cnt}">&lt;</a>
+			
+		    <c:forEach var="p" begin="${start}" end="${end}">
+		      <a class="btn ${p == page ? 'btn-primary' : 'btn-outline-primary'} ${page == p ? 'disabled' : ''}"
+		         href="list.go?page=${p}&cnt=${cnt}">${p}</a>
+		    </c:forEach>	
+	
+	    	<a class="btn btn-outline-secondary ${page == totalPage ? 'disabled' : ''}"
+	    		href="list.go?page=${next}&cnt=${cnt}">&gt;</a>
+	    	<a class="btn btn-outline-secondary ${page == totalPage ? 'disabled' : ''}"
+	    		href="list.go?page=${last}&cnt=${cnt}">&gt;&gt;</a>
+
+
+		</div>	  
     </div>
     <div id="no-data" style="display: none;">작성된 데이터가 없습니다.</div>
 </body>
 <script type="text/javascript">
-function selEvent(){
-let selId= document.getElementById("selId").value;
-let act = document.getElementById("act");
-	switch (selId) {
-		case '01':
-			act.innerHTML=
-				'';
-			break;		
-		case '02': 
-			act.innerHTML=
-			'<select id="selId2" class="form-control">'+
-		    	'<option value="01">자유</option>'+
-		    	'<option value="02">익명</option>'+
-		    	'<option value="03">QnA</option>'+
-		    '</select>';
-			break;
-		case '03': 
-			act.innerHTML=
-   	 			'<input type="text">';
-		    
-			break;
-		case '04': 
-			act.innerHTML=
-   	 			'<input type="text">';
-		    break;
-		case '05': 
-			act.innerHTML=
-   	 			'<input type="text">';
-		    break;
+function selEvent() {
+	  let selId = document.getElementById("selId").value;
+	  let act = document.getElementById("act");
+	  switch (selId) {
+	    case '01':
+	      act.innerHTML = '';
+	      break;
+	    case '02':
+	      act.innerHTML =
+	        '<select id="codeType" class="form-control">' +
+	        '<option value="01">자유</option>' +
+	        '<option value="02">익명</option>' +
+	        '<option value="03">QnA</option>' +
+	        '</select>';
+	      break;
+	    case '03':
+	    case '04':
+	    case '05':
+	      act.innerHTML = '<input type="text" class="form-control">';
+	      break;
 		case '06': 
 			act.innerHTML=
-   	 			'<input type="text" id="startDate"><input type="text" id="endDate">';
+   	 			'<input type="text" id="startDate"  class="form-control d-inline-block" ><input type="text" id="endDate"  class="form-control d-inline-block" >';
 		    break;
 	}
 }
-let pagingInited = false; //추가
-let cntPage = 0; //추가
-function searchClick( show = 1 ){
-let selId2 = document.getElementById("selId2");
-let selId= document.getElementById("selId").value;
-let context = document.getElementById("act").firstChild
-let startDate = document.getElementById("startDate");
-let endDate = document.getElementById("endDate");
-let data = {};
 
-	if (selId2) {
-		selId2= selId2.value;	
-	}
-	if (context) {
-		context= context.value;	
-	}
-	if (startDate && endDate){
-		startDate = startDate.value;
-		endDate = endDate.value;
-	}
-	
-	//추가
-	if (show === 1) {
-		  pagingInited = false;
-	}
+function readFilters(){
+const selId = document.getElementById("selId").value;
+const codeTypeEl = document.getElementById("codeType");
+const context = document.getElementById("act").querySelector('input');
+const startDate = document.getElementById("startDate");
+const endDate = document.getElementById("endDate");
+const base = { selId, cnt: 10 };
 
-	
 	switch (selId) {
-		case '02': 
-		    data = {"codeType": selId2};
-			break;
-		case '03': 
-			data = {"title": context };
-			break;
-		case '04': 
-			data = {"name": context };
-		    break;
-		case '05': 
-			data = {"num": context };
-		    break;
-		case '06': 
-			data = {"startDate": startDate , "endDate" : endDate };
-		    break;
+	  case '01':
+	    return base;
+	  case '02':
+	    return { ...base, codeType: codeTypeEl ? codeTypeEl.value : "" };
+	  case '03':
+	    return { ...base, title: context ? context.value.trim() : "" };
+	  case '04':
+	    return { ...base, name: context ? context.value.trim() : "" };
+	  case '05':
+	    return { ...base, num: context ? context.value.trim() : "" };
+	  case '06':
+	    return {
+	      ...base,
+	      startDate: startDate ? startDate.value.trim() : "",
+	      endDate: endDate ? endDate.value.trim() : ""
+	    };
+	  default:
+	    return base;
 	}
-	console.log("startDate : "+startDate+ " endDate: " + endDate);
-	data.page = show;
-	data.cnt = 10;
-	filter('search.ajax','post',data);	
+}
+let lastPage = 0;
+let lastFiltersKey = '';
+function filtersKeyOf(f) {
+	  // 검색조건이 같으면 pager 유지, 다르면 1페이지로
+	  const { selId, codeType, title, name, num, startDate, endDate, cnt } = f;
+	  return JSON.stringify({ selId, codeType, title, name, num, startDate, endDate, cnt });
+	}
+function loadPage(page) {
+	
+	
+  const filters = readFilters();
+  const key = filtersKeyOf(filters);
+
+  // 조건이 바뀌었으면 1페이지로 강제
+  if (key !== lastFiltersKey) page = 1;
+  const payload = { ...filters, page };
+
+  $.ajax({
+    type: 'POST',
+    url: 'search.ajax',
+    contentType: 'application/json',
+    dataType: 'json',
+    data: JSON.stringify(payload),
+    success: function (res) {
+    	//console.log('res: ' +JSON.stringify(res));
+    	
+	        drawList(res.list);
+	        drawPagination(page, res.totalPages);
+	        lastPage = page;
+	        lastFiltersKey = key;
+     	 
+    },
+    error: function (e) {
+      console.error(e);
+    }
+  });
 }
 
-filter('search.ajax','post',{"page" : 1 , "cnt" : 10 });
-    function filter(url,type,data) {
-        $.ajax({
-            type: type,
-            contentType: 'application/json',
-            url: url,
-            data: JSON.stringify(data),
-            dataType: 'JSON',
-            success: function(res) {
-            //console.log(JSON.stringify(res));
-                if (res.list.length > 0) {
-                    drawList(res.list);
-                  
-                    //추가
-                    if (!pagingInited || cntPage !== res.totalPages) {
-					$('#pages').twbsPagination('destroy');                	
-                    $('#pages').twbsPagination({
-		                startPage:1, 
-		                totalPages:res.totalPages, 
-		                visiblePages:5,
-		                initiateStartPageClick: false,
-		                first:'<<',
-		                prev:'<',
-		                next:'>',
-		                last:'>>',
-		                onPageClick:function(evt,page){
-		                   //console.log('evt',evt); 
-		                   //console.log('page',page);
-		                   searchClick(page);
-		                }
-                    });
-                  	//추가
-                    pagingInited = true;
-                    cntPage = res.totalPages;
-                  } 
-                } else {
-                    $('#list').html('');
-                    $('#no-data').show();
-                }
-            },
-            error: function(e) {
-                console.error(e);
-            }
-        });
+//리스트 렌더
+function drawList(list) {
+  const $list = $('#list');
+  if (!list || list.length === 0) {
+    $list.html('');
+    $('#no-data').show();
+    return;
+  }
+  let html = '';
+  list.forEach(view => {
+	  html += '<tr>';
+	  html += '<td>' + (view.codeType ?? '') + '</td>';
+	  html += '<td>' + (view.num ?? '') + '</td>';
+	  html += '<td><a href="detail.do?num=' + (view.num ?? '') + '">' + (view.title ?? '') + '</a></td>';
+	  html += '<td>' + (view.name ?? '') + '</td>';
+	  html += '<td>' + (view.bHit ?? '') + '</td>';
+	  html += '<td>' + (view.regdate ?? '') + '</td>';
+	  html += '</tr>';
+	});
+  $list.html(html);
+  $('#no-data').hide();
+}
+function searchClick() {
+    loadPage(1);
+}
+
+function drawPagination(curPage,totalPages){
+	let pages = document.getElementById('pages');
+	let prev = (curPage - 1) < 1 ? 1 : (curPage - 1) ;
+ 	let next = (curPage + 1) > totalPages ? totalPages : (curPage + 1);
+	let drawString = '';
+
+    let group = Math.floor((curPage - 1) / 5);
+    let start = group * 5 + 1;
+    let end = Math.min(totalPages, start + 5 - 1);
+    let first = (start-1) <= 1 ? 1:(start-1)
+   	let last = (end+1) >= totalPages ? totalPages:(end+1);
+    
+    
+    drawString += '<button onclick="drawBtn(' + first + ')" ' + (curPage === 1 ? 'disabled' : '') + '> << </button>';
+    drawString += '<button onclick="drawBtn(' + prev + ')" ' + (curPage === 1 ? 'disabled' : '') + '> < </button>';
+			
+    for (let i = start; i <= end; i++) {
+        drawString += '<button onclick="drawBtn(' + i + ')" ' + (i === curPage ? 'disabled' : '') + '>' + i + '</button>';
     }
 
-    function drawList(list) {
-        var content = '';
-        list.forEach(function(view, idx) {
-            content += '<tr>';
-            content += '<td>' + view.codeType + '</td>';
-            content += '<td>' + view.num + '</td>';
-            content += '<td><a href="detail.do?num=' + view.num + '">' + view.title + '</a></td>';
-            content += '<td>' + view.name + '</td>';
-            content += '<td>' + view.bHit + '</td>';
-            content += '<td>' + view.regdate + '</td>';
-            content += '</tr>';
-        });
-        $('#list').html(content);
-        $('#no-data').hide();
-    }
+    drawString += '<button onclick="drawBtn(' + next + ')" ' + (curPage === totalPages ? 'disabled' : '') + '> > </button>';
+    drawString += '<button onclick="drawBtn(' + last + ')" ' + (curPage === totalPages ? 'disabled' : '') + '> >> </button>';
+
+    pages.innerHTML = drawString;
+};
+function drawBtn(page){
+	  const filters = readFilters();
+	  const key = filtersKeyOf(filters);
+	  if (key !== lastFiltersKey) return;
+	loadPage(page);
+}
+
 </script>
 </html>

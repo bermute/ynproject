@@ -53,7 +53,7 @@ public class MemberController {
 		ModelAndView mav = new ModelAndView();
 		int row = member_ser.loginDo(params);
 		if (row >0) {
-			mav.setViewName("list");
+			mav.setViewName("redirect:/list.go");
 			session.setAttribute("loginId", params.get("id"));
 			
 		}else {
